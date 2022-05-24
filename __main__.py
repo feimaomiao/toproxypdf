@@ -4,6 +4,7 @@ import glob
 import logging
 import os
 from PIL import Image
+from tqdm import tqdm
 from os import path
 
 def parse_arguments() -> dict:
@@ -24,20 +25,29 @@ def parse_arguments() -> dict:
     pgroup.add_argument("-v", "--verbose", help="increaes output verbosity", action="store_true")
     pgroup.add_argument("-q", "--quiet", help="reduces output verbosity", action="store_true")
     args = parser.parse_args()
+    # select output file
+    o = f"{args.folder}.pdf"
+    if args.output is not None:
+        if args.output.endswith(".pdf"):
+            o = args.output
+        else:
+            o = args.output + ".pdf"
     a = {
         # input folder
         "folder"    : args.folder,
         # output file 
-        "output"    : args.output if args.output is not None else f"{args.folder}.pdf",
+        "output"    : o,
         # list of excluded file names
         "excluded"  : args.excluded,
+        # verbosity
+        "verb"      : 0 if args.quiet else 2 if args.verbose else 1
     }
     verbosity = {
         0: logging.CRITICAL,
         1: logging.INFO,
         2: logging.DEBUG
     }
-    logging.basicConfig(level=verbosity[0 if args.quiet else 2 if args.verbose else 1])
+    logging.basicConfig(level=verbosity[a['verb']])
     if not path.isdir(a["folder"]):
         raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
     return a
@@ -52,7 +62,11 @@ def list_files(arguments: dict) -> list:
         list: list of Image objects that will be added to the printing image.
     """
     allfiles = []
-    for files in sorted(os.listdir(arguments['folder'])):
+    logging.info(f"Reading and resizing images for inputted folder {arguments['folder']}")
+    it = sorted(os.listdir(arguments['folder']))
+    if arguments['verb'] > 0:
+        it = tqdm(it)
+    for files in it:
         fn = path.join(arguments['folder'], files)
 
         # Check whether path is excluded
@@ -71,13 +85,39 @@ def list_files(arguments: dict) -> list:
         try:
             img.verify()
             img = Image.open(fn)
-            allfiles.append(img)
+            # resizing images into 1000dpi 
+            allfiles.append(img.resize((2500,3500)))
         except:
             logging.info(f"{fn} is not a valid image, will be skipped")
 
     logging.info(f"Loaded all images, {len(allfiles)} photos are loaded")
     return allfiles
 
+def generate_images(fileslist: list,arguments: dict) -> list:
+    # round up amount of pages needed, create however many white backgrounds
+    backgrounds = [Image.new("RGB", (8270,11690), color="white") for i in range(-(-len(fileslist) // 9 ))]
+    logging.debug("Created background images")
+    # balanced x/y coordinates
+    xcords = [385, 2885, 5385]
+    ycords = [595, 4095, 7595]
+
+    # pastes each file onto backgrounds
+    logging.info("Pasting images on backgrounds")
+    it = range(len(fileslist))
+    if arguments['verb'] > 0:
+        it = tqdm(it)
+    for i in it:
+        x = xcords[i % 3]
+        y = ycords[(i % 9) // 3]
+        backgrounds[i//9].paste(fileslist[i], (x, y))
+        logging.debug(f"Pasted {fileslist[i]} onto background {i // 9}")
+    logging.info("Finished pasting images")
+    return backgrounds
+
+
 if __name__ == "__main__":
     arguments = parse_arguments()
     files_to_load = list_files(arguments)
+    generated_images = generate_images(files_to_load, arguments)
+    logging.info("Converting into pdf")
+    generated_images[0].save(arguments['output'], resolution=100.0, save_all=True, append_images=generated_images[1:])
