@@ -111,9 +111,9 @@ def list_files(arguments: dict) -> list:
             img.verify()
             img = Image.open(fn)
             # resizing images into 1000dpi 
-            img = img.resize((635,889))
-            img = add_corners(img, 30)
-            allfiles.append(img)
+            img = img.resize((2500,3500))
+            img = add_corners(img, 120)
+            allfiles.append(img.resize((2500,3500)))
         except Exception as e:
             logging.info(f"{fn} is not a valid image, will be skipped ({type(e)})")
 
@@ -131,7 +131,7 @@ def generate_images(fileslist: list,arguments: dict) -> list:
         list: list of white background images
     """
     # round up amount of pages needed, create however many white backgrounds
-    backgrounds = [Image.new("RGBA", (1660,2340), color="white") for i in range(-(-len(fileslist) // 9 ))]
+    backgrounds = [Image.new("RGBA", (8268,11693), color="white") for i in range(-(-len(fileslist) // 9 ))]
     logging.debug("Created background images")
     # balanced x/y coordinates
     xcords = [385, 2885, 5385]
@@ -147,7 +147,7 @@ def generate_images(fileslist: list,arguments: dict) -> list:
         y = ycords[(i % 9) // 3]
         backgrounds[i//9].paste(fileslist[i], (x, y), fileslist[i])
         logging.debug(f"Pasted {fileslist[i]} onto background {i // 9}")
-    logging.info(f"Finished pasting images, converting {len(fileslist)}to RGB from RGBA")
+    logging.info(f"Finished pasting images, converting {-(-len(fileslist) // 9 )} images from RGBA to RGB")
     return [i.convert("RGB") for i in backgrounds]
 
 
@@ -156,4 +156,5 @@ if __name__ == "__main__":
     files_to_load = list_files(arguments)
     generated_images = generate_images(files_to_load, arguments)
     logging.info("Converting into pdf")
-    generated_images[0].save(arguments['output'], resolution=1200, save_all=True, append_images=generated_images[1:])
+    generated_images[0].show()
+    generated_images[0].save(arguments['output'], resolution=1000, save_all=True, append_images=generated_images[1:])

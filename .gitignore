@@ -1,6 +1,6 @@
 # testing folder 
 testimg/
-test.pdf
+*.pdf
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
