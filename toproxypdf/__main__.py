@@ -13,6 +13,7 @@ def parse_arguments() -> dict:
     """Parses user inputted arguments
 
     Raises:
+        FileExistsError: Attempted output file already exists
         FileNotFoundError: required position argument "file" is not an existing directory
 
     Returns:
@@ -20,7 +21,8 @@ def parse_arguments() -> dict:
     """
     parser = argparse.ArgumentParser(
         prog="toproxypdf",
-        epilog="If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
+        epilog=
+        "If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
     )
     # input folder
     parser.add_argument("folder",
@@ -39,14 +41,12 @@ def parse_arguments() -> dict:
         dest="excluded",
         nargs="+",
         default=[])
-    parser.add_argument(
-        "-d",
-        "--dpi",
-        help="File output resolution in dots/pixel",
-        dest="dpi",
-        type=int,
-        default=1000
-    )
+    parser.add_argument("-d",
+                        "--dpi",
+                        help="File output resolution in dots/pixel",
+                        dest="dpi",
+                        type=int,
+                        default=1000)
     # verbose and quiet cannot coexist
     pgroup = parser.add_mutually_exclusive_group()
     pgroup.add_argument("-v",
@@ -133,7 +133,9 @@ def list_files(arguments: dict) -> list:
             img.verify()
             img = Image.open(fn)
             # resizing images into 1000dpi
-            allfiles.append(img.resize((int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi']))))
+            allfiles.append(
+                img.resize(
+                    (int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi']))))
         except Exception as e:
             logging.debug(
                 f"{fn} is not a valid image, will be skipped ({type(e)})")
@@ -160,13 +162,22 @@ def generate_images(fileslist: list, arguments: dict) -> list:
     """
     # round up amount of pages needed, create however many white backgrounds
     backgrounds = [
-        Image.new("RGB", (int(8.5 * arguments['dpi']) , int(11 * arguments['dpi'])), color="white")
-        for i in range(-(-len(fileslist) // 9))
+        Image.new("RGB",
+                  (int(8.5 * arguments['dpi']), int(11 * arguments['dpi'])),
+                  color="white") for i in range(-(-len(fileslist) // 9))
     ]
     logging.debug("Created background images")
     # balanced x/y coordinates
-    xcords = [int(.5 * arguments['dpi']), int(3 * arguments['dpi'] + round(.01 * arguments['dpi'])),int(5.5 * arguments['dpi'] + round(.02 * arguments['dpi']))]
-    ycords = [int(.25 * arguments['dpi']) , int(3.75 * arguments['dpi'] + round(.01 * arguments['dpi'])),int(7.25 * arguments['dpi'] + round(.02 * arguments['dpi']))]
+    xcords = [
+        int(.5 * arguments['dpi']),
+        int(3 * arguments['dpi'] + round(.01 * arguments['dpi'])),
+        int(5.5 * arguments['dpi'] + round(.02 * arguments['dpi']))
+    ]
+    ycords = [
+        int(.25 * arguments['dpi']),
+        int(3.75 * arguments['dpi'] + round(.01 * arguments['dpi'])),
+        int(7.25 * arguments['dpi'] + round(.02 * arguments['dpi']))
+    ]
 
     # pastes each file onto backgrounds
     logging.info("Pasting images on backgrounds")
