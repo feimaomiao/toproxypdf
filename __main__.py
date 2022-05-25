@@ -54,28 +54,6 @@ def parse_arguments() -> dict:
         raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
     return a
 
-def add_corners(img, rad):
-    """Adds round corners to each card
-
-    Args:
-        img (PIL.Image): Image to add corners on
-        rad (int): radius of ellipse
-
-    Returns:
-        PIL.Image: altered Image
-    """
-    circle = Image.new('L', (rad * 2, rad * 2), 0)
-    draw = ImageDraw.Draw(circle)
-    draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
-    alpha = Image.new('L', img.size, 255)
-    w, h = img.size
-    alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
-    alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
-    alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
-    alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
-    img.putalpha(alpha)
-    return img
-
 def list_files(arguments: dict) -> list:
     """Lists all files within the specified folder
 
@@ -111,8 +89,6 @@ def list_files(arguments: dict) -> list:
             img.verify()
             img = Image.open(fn)
             # resizing images into 1000dpi 
-            img = img.resize((2500,3500))
-            img = add_corners(img, 120)
             allfiles.append(img.resize((2500,3500)))
         except Exception as e:
             logging.info(f"{fn} is not a valid image, will be skipped ({type(e)})")
@@ -131,7 +107,7 @@ def generate_images(fileslist: list,arguments: dict) -> list:
         list: list of white background images
     """
     # round up amount of pages needed, create however many white backgrounds
-    backgrounds = [Image.new("RGBA", (8268,11693), color="white") for i in range(-(-len(fileslist) // 9 ))]
+    backgrounds = [Image.new("RGB", (8268,11693), color="white") for i in range(-(-len(fileslist) // 9 ))]
     logging.debug("Created background images")
     # balanced x/y coordinates
     xcords = [385, 2885, 5385]
