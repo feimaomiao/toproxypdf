@@ -1,8 +1,6 @@
 import argparse
-import glob
 import logging
 import os
-from ast import arg
 from os import path
 
 from PIL import Image
