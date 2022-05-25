@@ -5,7 +5,7 @@ import os
 from ast import arg
 from os import path
 
-from PIL import Image, ImageDraw
+from PIL import Image
 from tqdm import tqdm
 
 
@@ -18,14 +18,37 @@ def parse_arguments() -> dict:
     Returns:
         dict: returns a dict consisting of the input folder, output file, excluded filenames and verbosity.
     """
-    parser = argparse.ArgumentParser(prog="toproxypdf", epilog="If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues")
-    parser.add_argument("folder", help="folder path where all your images are stored")
-    parser.add_argument("-o", "--output", help="output pdf file name", dest="output")
-    parser.add_argument("-e", "--exclude", help="File names that should be excluded (in short os form)", action = "extend", dest="excluded", nargs="+")
+    parser = argparse.ArgumentParser(
+        prog="toproxypdf",
+        epilog="If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
+    )
+    # input folder
+    parser.add_argument("folder",
+                        help="folder path where all your images are stored")
+    # output file
+    parser.add_argument("-o",
+                        "--output",
+                        help="output pdf file name",
+                        dest="output")
+    # excluded files
+    parser.add_argument(
+        "-e",
+        "--exclude",
+        help="File names that should be excluded (just in the file name)",
+        action="extend",
+        dest="excluded",
+        nargs="+")
     # verbose and quiet cannot coexist
     pgroup = parser.add_mutually_exclusive_group()
-    pgroup.add_argument("-v", "--verbose", help="increaes output verbosity", action="store_true")
-    pgroup.add_argument("-q", "--quiet", help="reduces output verbosity", action="store_true")
+    pgroup.add_argument("-v",
+                        "--verbose",
+                        help="increases output verbosity",
+                        action="store_true")
+    pgroup.add_argument("-q",
+                        "--quiet",
+                        help="reduces output verbosity",
+                        action="store_true")
+    # parses arguments
     args = parser.parse_args()
     # select output file
     o = f"output.pdf"
@@ -36,23 +59,21 @@ def parse_arguments() -> dict:
             o = args.output + ".pdf"
     a = {
         # input folder
-        "folder"    : args.folder,
-        # output file 
-        "output"    : o,
+        "folder": args.folder,
+        # output file
+        "output": o,
         # list of excluded file names
-        "excluded"  : args.excluded,
+        "excluded": args.excluded,
         # verbosity
-        "verb"      : 0 if args.quiet else 2 if args.verbose else 1
+        "verb": 0 if args.quiet else 2 if args.verbose else 1
     }
-    verbosity = {
-        0: logging.CRITICAL,
-        1: logging.INFO,
-        2: logging.DEBUG
-    }
+    verbosity = {0: logging.CRITICAL, 1: logging.INFO, 2: logging.DEBUG}
     logging.basicConfig(level=verbosity[a['verb']])
+    # checks whether the input folder is a valid path
     if not path.isdir(a["folder"]):
         raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
     return a
+
 
 def list_files(arguments: dict) -> list:
     """Lists all files within the specified folder
@@ -64,11 +85,13 @@ def list_files(arguments: dict) -> list:
         list: list of Image objects that will be added to the printing image.
     """
     allfiles = []
-    logging.info(f"Reading and resizing images for inputted folder {arguments['folder']}")
-    it = sorted(os.listdir(arguments['folder']))
+    logging.info(
+        f"Reading and resizing images for inputted folder {arguments['folder']}"
+    )
+    iterable = sorted(os.listdir(arguments['folder']))
     if arguments['verb'] > 0:
-        it = tqdm(it)
-    for files in it:
+        iterable = tqdm(iterable)
+    for files in iterable:
         fn = path.join(arguments['folder'], files)
 
         # Check whether path is excluded
@@ -85,18 +108,20 @@ def list_files(arguments: dict) -> list:
         # Check whether file is a valid image
         logging.debug(f"Verifying image {fn}")
         try:
-            img= Image.open(fn)
+            img = Image.open(fn)
             img.verify()
             img = Image.open(fn)
-            # resizing images into 1000dpi 
-            allfiles.append(img.resize((2500,3500)))
+            # resizing images into 1000dpi
+            allfiles.append(img.resize((2500, 3500)))
         except Exception as e:
-            logging.info(f"{fn} is not a valid image, will be skipped ({type(e)})")
+            logging.info(
+                f"{fn} is not a valid image, will be skipped ({type(e)})")
 
     logging.info(f"Loaded all images, {len(allfiles)} photos are loaded")
     return allfiles
 
-def generate_images(fileslist: list,arguments: dict) -> list:
+
+def generate_images(fileslist: list, arguments: dict) -> list:
     """Pastes images onto pure white backgrounds
 
     Args:
@@ -107,30 +132,40 @@ def generate_images(fileslist: list,arguments: dict) -> list:
         list: list of white background images
     """
     # round up amount of pages needed, create however many white backgrounds
-    backgrounds = [Image.new("RGB", (8268,11693), color="white") for i in range(-(-len(fileslist) // 9 ))]
+    backgrounds = [
+        Image.new("RGB", (8500, 11000), color="white")
+        for i in range(-(-len(fileslist) // 9))
+    ]
     logging.debug("Created background images")
     # balanced x/y coordinates
-    xcords = [385, 2885, 5385]
-    ycords = [595, 4095, 7595]
+    xcords = [500, 3005, 5510]
+    ycords = [250, 3755, 7260]
 
     # pastes each file onto backgrounds
     logging.info("Pasting images on backgrounds")
-    it = range(len(fileslist))
+    iterable = range(len(fileslist))
     if arguments['verb'] > 0:
-        it = tqdm(it)
-    for i in it:
+        iterable = tqdm(iterable)
+    for i in iterable:
         x = xcords[i % 3]
         y = ycords[(i % 9) // 3]
-        backgrounds[i//9].paste(fileslist[i], (x, y), fileslist[i])
+        backgrounds[i // 9].paste(fileslist[i], (x, y))
         logging.debug(f"Pasted {fileslist[i]} onto background {i // 9}")
-    logging.info(f"Finished pasting images, converting {-(-len(fileslist) // 9 )} images from RGBA to RGB")
-    return [i.convert("RGB") for i in backgrounds]
+    logging.info(f"Finished pasting images")
+    return backgrounds
 
 
 if __name__ == "__main__":
+    # load arguments
     arguments = parse_arguments()
+    # load files
     files_to_load = list_files(arguments)
+    # convert files into images
     generated_images = generate_images(files_to_load, arguments)
     logging.info("Converting into pdf")
-    generated_images[0].show()
-    generated_images[0].save(arguments['output'], resolution=1000, save_all=True, append_images=generated_images[1:])
+    # save generated images
+    generated_images[0].save(arguments['output'],
+                             resolution=1000,
+                             save_all=True,
+                             append_images=generated_images[1:])
+    quit(0)
