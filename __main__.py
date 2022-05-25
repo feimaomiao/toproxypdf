@@ -5,7 +5,7 @@ import os
 from ast import arg
 from os import path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 
@@ -28,7 +28,7 @@ def parse_arguments() -> dict:
     pgroup.add_argument("-q", "--quiet", help="reduces output verbosity", action="store_true")
     args = parser.parse_args()
     # select output file
-    o = f"{args.folder}.pdf"
+    o = f"output.pdf"
     if args.output is not None:
         if args.output.endswith(".pdf"):
             o = args.output
@@ -54,6 +54,28 @@ def parse_arguments() -> dict:
         raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
     return a
 
+def add_corners(img, rad):
+    """Adds round corners to each card
+
+    Args:
+        img (PIL.Image): Image to add corners on
+        rad (int): radius of ellipse
+
+    Returns:
+        PIL.Image: altered Image
+    """
+    circle = Image.new('L', (rad * 2, rad * 2), 0)
+    draw = ImageDraw.Draw(circle)
+    draw.ellipse((0, 0, rad * 2, rad * 2), fill=255)
+    alpha = Image.new('L', img.size, 255)
+    w, h = img.size
+    alpha.paste(circle.crop((0, 0, rad, rad)), (0, 0))
+    alpha.paste(circle.crop((0, rad, rad, rad * 2)), (0, h - rad))
+    alpha.paste(circle.crop((rad, 0, rad * 2, rad)), (w - rad, 0))
+    alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
+    img.putalpha(alpha)
+    return img
+
 def list_files(arguments: dict) -> list:
     """Lists all files within the specified folder
 
@@ -72,9 +94,10 @@ def list_files(arguments: dict) -> list:
         fn = path.join(arguments['folder'], files)
 
         # Check whether path is excluded
-        if any(files.lower().startswith(i) for i in arguments['excluded']):
-            logging.info(f"{fn} is in the excluded list, skipping file.")
-            continue
+        if arguments['excluded']:
+            if any(files.lower().startswith(i) for i in arguments['excluded']):
+                logging.info(f"{fn} is in the excluded list, skipping file.")
+                continue
 
         # Check whether specified path is a file
         if not os.path.isfile(fn):
@@ -83,20 +106,22 @@ def list_files(arguments: dict) -> list:
 
         # Check whether file is a valid image
         logging.debug(f"Verifying image {fn}")
-        img= Image.open(fn)
         try:
+            img= Image.open(fn)
             img.verify()
             img = Image.open(fn)
             # resizing images into 1000dpi 
-            allfiles.append(img.resize((2500,3500)))
-        except:
-            logging.info(f"{fn} is not a valid image, will be skipped")
+            img = img.resize((2500,3500))
+            img = add_corners(img, 120)
+            allfiles.append(img)
+        except Exception as e:
+            logging.info(f"{fn} is not a valid image, will be skipped ({type(e)})")
 
     logging.info(f"Loaded all images, {len(allfiles)} photos are loaded")
     return allfiles
 
 def generate_images(fileslist: list,arguments: dict) -> list:
-    """Pastes images ontopure white backgrounds
+    """Pastes images onto pure white backgrounds
 
     Args:
         fileslist (list): list of files to paste onto the white backgrounds
@@ -106,7 +131,7 @@ def generate_images(fileslist: list,arguments: dict) -> list:
         list: list of white background images
     """
     # round up amount of pages needed, create however many white backgrounds
-    backgrounds = [Image.new("RGB", (8270,11690), color="white") for i in range(-(-len(fileslist) // 9 ))]
+    backgrounds = [Image.new("RGBA", (8270,11690), color="white") for i in range(-(-len(fileslist) // 9 ))]
     logging.debug("Created background images")
     # balanced x/y coordinates
     xcords = [385, 2885, 5385]
@@ -120,10 +145,10 @@ def generate_images(fileslist: list,arguments: dict) -> list:
     for i in it:
         x = xcords[i % 3]
         y = ycords[(i % 9) // 3]
-        backgrounds[i//9].paste(fileslist[i], (x, y))
+        backgrounds[i//9].paste(fileslist[i], (x, y), fileslist[i])
         logging.debug(f"Pasted {fileslist[i]} onto background {i // 9}")
-    logging.info("Finished pasting images")
-    return backgrounds
+    logging.info(f"Finished pasting images, converting {len()}to RGB from RGBA")
+    return [i.convert("RGB") for i in backgrounds]
 
 
 if __name__ == "__main__":
@@ -131,4 +156,4 @@ if __name__ == "__main__":
     files_to_load = list_files(arguments)
     generated_images = generate_images(files_to_load, arguments)
     logging.info("Converting into pdf")
-    generated_images[0].save(arguments['output'], resolution=100.0, save_all=True, append_images=generated_images[1:])
+    generated_images[0].save(arguments['output'], resolution=1200, save_all=True, append_images=generated_images[1:])
