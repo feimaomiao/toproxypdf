@@ -37,7 +37,16 @@ def parse_arguments() -> dict:
         help="File names that should be excluded (just in the file name)",
         action="extend",
         dest="excluded",
-        nargs="+")
+        nargs="+",
+        default=[])
+    parser.add_argument(
+        "-d",
+        "--dpi",
+        help="File output resolution in dots/pixel",
+        dest="dpi",
+        type=int,
+        default=1000
+    )
     # verbose and quiet cannot coexist
     pgroup = parser.add_mutually_exclusive_group()
     pgroup.add_argument("-v",
@@ -57,6 +66,8 @@ def parse_arguments() -> dict:
             o = args.output
         else:
             o = args.output + ".pdf"
+    if path.isfile(o):
+        raise FileExistsError("Attempted output file already exists")
     a = {
         # input folder
         "folder": args.folder,
@@ -64,14 +75,22 @@ def parse_arguments() -> dict:
         "output": o,
         # list of excluded file names
         "excluded": args.excluded,
+        #dpi
+        "dpi": args.dpi,
         # verbosity
         "verb": 0 if args.quiet else 2 if args.verbose else 1
     }
     verbosity = {0: logging.CRITICAL, 1: logging.INFO, 2: logging.DEBUG}
-    logging.basicConfig(level=verbosity[a['verb']])
     # checks whether the input folder is a valid path
     if not path.isdir(a["folder"]):
         raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
+    print(f"""\
+Reading from folder:    {a['folder']}
+Outputting to file:     {a['output']}
+Excluded Files:         {' /'.join(list(a['excluded']))}
+Output DPI:             {a['dpi']}
+Verbosity:              {a['verb']}""")
+    logging.basicConfig(level=verbosity[a['verb']])
     return a
 
 
@@ -86,23 +105,25 @@ def list_files(arguments: dict) -> list:
     """
     allfiles = []
     logging.info(
-        f"Reading and resizing images for inputted folder {arguments['folder']}"
+        f"Reading and resizing images from inputted folder {arguments['folder']}"
     )
     iterable = sorted(os.listdir(arguments['folder']))
     if arguments['verb'] > 0:
         iterable = tqdm(iterable)
+    excluded_files = []
     for files in iterable:
         fn = path.join(arguments['folder'], files)
 
         # Check whether path is excluded
-        if arguments['excluded']:
-            if any(files.lower().startswith(i) for i in arguments['excluded']):
-                logging.info(f"{fn} is in the excluded list, skipping file.")
-                continue
+        if any(files.lower().startswith(i) for i in arguments['excluded']):
+            logging.debug(f"{fn} is in the excluded list, skipping file.")
+            excluded_files.append((files, "is in excluded list"))
+            continue
 
         # Check whether specified path is a file
         if not os.path.isfile(fn):
-            logging.info(f"{fn} is not a file, will be skipped")
+            logging.debug(f"{fn} is not a file, will be skipped")
+            excluded_files.append((files, "is not a file"))
             continue
 
         # Check whether file is a valid image
@@ -112,12 +133,18 @@ def list_files(arguments: dict) -> list:
             img.verify()
             img = Image.open(fn)
             # resizing images into 1000dpi
-            allfiles.append(img.resize((2500, 3500)))
+            allfiles.append(img.resize((int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi']))))
         except Exception as e:
-            logging.info(
+            logging.debug(
                 f"{fn} is not a valid image, will be skipped ({type(e)})")
+            excluded_files.append((files, "is not a valid image"))
 
-    logging.info(f"Loaded all images, {len(allfiles)} photos are loaded")
+    logging.info(f"Loaded {len(allfiles)} images")
+    mlen = max(len(i[0]) for i in excluded_files)
+    mlen = mlen if mlen > 18 else 18
+    print(f"{'Excluded file name':{mlen}}|Reason")
+    for a, b in excluded_files:
+        print(f"{a:{mlen}}|{b}")
     return allfiles
 
 
@@ -133,13 +160,13 @@ def generate_images(fileslist: list, arguments: dict) -> list:
     """
     # round up amount of pages needed, create however many white backgrounds
     backgrounds = [
-        Image.new("RGB", (8500, 11000), color="white")
+        Image.new("RGB", (int(8.5 * arguments['dpi']) , int(11 * arguments['dpi'])), color="white")
         for i in range(-(-len(fileslist) // 9))
     ]
     logging.debug("Created background images")
     # balanced x/y coordinates
-    xcords = [500, 3005, 5510]
-    ycords = [250, 3755, 7260]
+    xcords = [int(.5 * arguments['dpi']), int(3 * arguments['dpi'] + round(.01 * arguments['dpi'])),int(5.5 * arguments['dpi'] + round(.02 * arguments['dpi']))]
+    ycords = [int(.25 * arguments['dpi']) , int(3.75 * arguments['dpi'] + round(.01 * arguments['dpi'])),int(7.25 * arguments['dpi'] + round(.02 * arguments['dpi']))]
 
     # pastes each file onto backgrounds
     logging.info("Pasting images on backgrounds")
@@ -165,7 +192,7 @@ if __name__ == "__main__":
     logging.info("Converting into pdf")
     # save generated images
     generated_images[0].save(arguments['output'],
-                             resolution=1000,
+                             resolution=arguments['dpi'],
                              save_all=True,
                              append_images=generated_images[1:])
     quit(0)
