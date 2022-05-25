@@ -1,11 +1,13 @@
 import argparse
-from ast import arg
 import glob
 import logging
 import os
+from ast import arg
+from os import path
+
 from PIL import Image
 from tqdm import tqdm
-from os import path
+
 
 def parse_arguments() -> dict:
     """Parses user inputted arguments
@@ -94,6 +96,15 @@ def list_files(arguments: dict) -> list:
     return allfiles
 
 def generate_images(fileslist: list,arguments: dict) -> list:
+    """Pastes images ontopure white backgrounds
+
+    Args:
+        fileslist (list): list of files to paste onto the white backgrounds
+        arguments (dict): argument dict
+
+    Returns:
+        list: list of white background images
+    """
     # round up amount of pages needed, create however many white backgrounds
     backgrounds = [Image.new("RGB", (8270,11690), color="white") for i in range(-(-len(fileslist) // 9 ))]
     logging.debug("Created background images")
