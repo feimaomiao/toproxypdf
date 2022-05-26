@@ -1,6 +1,4 @@
 import argparse
-import glob
-from lib2to3.pytree import convert
 import logging
 import os
 from os import path
@@ -53,6 +51,11 @@ def parse_arguments() -> dict:
     action="store_true",
     dest="corner",
     default=False)
+    parser.add_argument("--overwrite",
+    help="overwrite existing files",
+    action="store_true",
+    dest="overwrite",
+    default=False)
     # verbose and quiet cannot coexist
     pgroup = parser.add_mutually_exclusive_group()
     pgroup.add_argument("-v",
@@ -72,7 +75,7 @@ def parse_arguments() -> dict:
             o = args.output
         else:
             o = args.output + ".pdf"
-    if path.isfile(o):
+    if path.isfile(o) and not args.overwrite:
         raise FileExistsError("Attempted output file already exists")
     a = {
         # input folder
@@ -95,8 +98,10 @@ def parse_arguments() -> dict:
     print(f"""\
 Reading from folder:    {a['folder']}
 Outputting to file:     {a['output']}
+Overwrite existing file:{args.overwrite}
 Excluded Files:         {' /'.join(list(a['excluded']))}
 Output DPI:             {a['dpi']}
+Corner:                 {bool(a['corner'])}
 Verbosity:              {a['verb']}""")
     logging.basicConfig(level=verbosity[a['verb']])
     return a
@@ -162,7 +167,7 @@ def list_files(arguments: dict) -> list:
             img = Image.open(fn)
             img = img.resize((int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi'])))
             if arguments['corner']:
-                img = add_corners(img, 150)
+                img = add_corners(img, int(.15 * arguments['dpi']))
             # resizing images into 1000dpi
             allfiles.append(img)
         except Exception as e:
