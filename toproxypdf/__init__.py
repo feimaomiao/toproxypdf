@@ -19,8 +19,7 @@ def parse_arguments() -> dict:
     """
     parser = argparse.ArgumentParser(
         prog="toproxypdf",
-        epilog=
-        "If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
+        epilog="If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
     )
     # input folder
     parser.add_argument("folder",
@@ -73,7 +72,7 @@ def parse_arguments() -> dict:
         "output": o,
         # list of excluded file names
         "excluded": args.excluded,
-        #dpi
+        # dpi
         "dpi": args.dpi,
         # verbosity
         "verb": 0 if args.quiet else 2 if args.verbose else 1
@@ -194,7 +193,7 @@ def generate_images(fileslist: list, arguments: dict) -> list:
     return backgrounds
 
 
-if __name__ == "__main__":
+def main():
     # load arguments
     arguments = parse_arguments()
     # load files
