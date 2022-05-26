@@ -140,11 +140,14 @@ def list_files(arguments: dict) -> list:
             excluded_files.append((files, "is not a valid image"))
 
     logging.info(f"Loaded {len(allfiles)} images")
-    mlen = max(len(i[0]) for i in excluded_files)
-    mlen = mlen if mlen > 18 else 18
-    print(f"{'Excluded file name':{mlen}}|Reason")
-    for a, b in excluded_files:
-        print(f"{a:{mlen}}|{b}")
+    try:
+        mlen = max(len(i[0]) for i in excluded_files)
+        mlen = mlen if mlen > 18 else 18
+        print(f"{'Excluded file name':{mlen}}|Reason")
+        for a, b in excluded_files:
+            print(f"{a:{mlen}}|{b}")
+    except ValueError:
+        pass
     return allfiles
 
 
