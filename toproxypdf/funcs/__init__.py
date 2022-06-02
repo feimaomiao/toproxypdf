@@ -19,8 +19,7 @@ def parse_arguments() -> dict:
     """
     parser = argparse.ArgumentParser(
         prog="toproxypdf",
-        epilog=
-        "If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
+        epilog="If you think a bug has occured, please open an issue at https://github.com/feimaomiao/toproxypdf/issues"
     )
     # input folder
     parser.add_argument("folder",
@@ -45,17 +44,22 @@ def parse_arguments() -> dict:
                         dest="dpi",
                         type=int,
                         default=1000)
-    parser.add_argument("-c" 
-    "--corner",
-    help="Add corners to each image",
-    action="store_true",
-    dest="corner",
-    default=False)
+    parser.add_argument("-c"
+                        "--corner",
+                        help="Add corners to each image",
+                        action="store_true",
+                        dest="corner",
+                        default=False)
+    parser.add_argument("-r",
+                        "--repeat",
+                        help="repeats the output files",
+                        dest="repeat",
+                        default=1)
     parser.add_argument("--overwrite",
-    help="overwrite existing files",
-    action="store_true",
-    dest="overwrite",
-    default=False)
+                        help="overwrite existing files",
+                        action="store_true",
+                        dest="overwrite",
+                        default=False)
     # verbose and quiet cannot coexist
     pgroup = parser.add_mutually_exclusive_group()
     pgroup.add_argument("-v",
@@ -77,6 +81,11 @@ def parse_arguments() -> dict:
             o = args.output + ".pdf"
     if path.isfile(o) and not args.overwrite:
         raise FileExistsError("Attempted output file already exists")
+    try:
+        if int(args.repeat) <= 0:
+            raise ValueError("Repeats must be at least 1")
+    except:
+        raise
     a = {
         # input folder
         "folder": args.folder,
@@ -84,9 +93,11 @@ def parse_arguments() -> dict:
         "output": o,
         # list of excluded file names
         "excluded": args.excluded,
-        #dpi
+        # dpi
         "dpi": args.dpi,
-        #corner
+        # repeats
+        "repeat": int(args.repeat),
+        # corner
         "corner": args.corner,
         # verbosity
         "verb": 0 if args.quiet else 2 if args.verbose else 1
@@ -101,6 +112,7 @@ Outputting to file:     {a['output']}
 Overwrite existing file:{args.overwrite}
 Excluded Files:         {' /'.join(list(a['excluded']))}
 Output DPI:             {a['dpi']}
+Repeats:                {a['repeat']}
 Corner:                 {bool(a['corner'])}
 Verbosity:              {a['verb']}""")
     logging.basicConfig(level=verbosity[a['verb']])
@@ -126,6 +138,7 @@ def add_corners(img, rad):
     alpha.paste(circle.crop((rad, rad, rad * 2, rad * 2)), (w - rad, h - rad))
     img.putalpha(alpha)
     return img
+
 
 def list_files(arguments: dict) -> list:
     """Lists all files within the specified folder
@@ -165,7 +178,8 @@ def list_files(arguments: dict) -> list:
             img = Image.open(fn)
             img.verify()
             img = Image.open(fn)
-            img = img.resize((int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi'])))
+            img = img.resize(
+                (int(2.5 * arguments['dpi']), int(3.5 * arguments['dpi'])))
             if arguments['corner']:
                 img = add_corners(img, int(.15 * arguments['dpi']))
             # resizing images into 1000dpi
@@ -181,7 +195,7 @@ def list_files(arguments: dict) -> list:
         print(f"{'Excluded file name':{mlen}}|Reason")
         for a, b in excluded_files:
             print(f"{a:{mlen}}|{b}")
-    return allfiles
+    return allfiles * arguments['repeat']
 
 
 def generate_images(fileslist: list, arguments: dict) -> list:
@@ -196,7 +210,7 @@ def generate_images(fileslist: list, arguments: dict) -> list:
     """
     # round up amount of pages needed, create however many white backgrounds
     backgrounds = [
-        Image.new("RGBA",
+        Image.new("RGBA" if arguments['corner'] else "RGB",
                   (int(8.5 * arguments['dpi']), int(11 * arguments['dpi'])),
                   color="white") for i in range(-(-len(fileslist) // 9))
     ]
@@ -226,7 +240,9 @@ def generate_images(fileslist: list, arguments: dict) -> list:
         else:
             backgrounds[i // 9].paste(fileslist[i], (x, y), fileslist[i])
         logging.debug(f"Pasted {fileslist[i]} onto background {i // 9}")
-    logging.info(f"Finished pasting images, converting {len(backgrounds)} images into RGB format")
+    logging.info(
+        f"Finished pasting images, converting {len(backgrounds)} images into RGB format"
+    )
     if arguments['corner']:
         return [i.convert("RGB") for i in backgrounds]
     else:
