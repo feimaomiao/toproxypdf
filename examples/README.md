@@ -18,7 +18,7 @@ Optional Arguments
 - [--overwrite](#overwrite)
 - [-v / -q verbosity](#verbosity)
 
-## folder
+## Folder
 
 Folder has to be designated while initiating the program  
 Possible program calls:  
@@ -49,7 +49,7 @@ Verbosity:              1
 
   ![A normal output file](.images/0.jpg)  
 
-## help
+## Help
 
 `toproxypdf -h`  or `--help` both displays the help menu.
 
@@ -61,7 +61,7 @@ usage: toproxypdf [-h] [-o OUTPUT] [-e EXCLUDED [EXCLUDED ...]] [-d DPI] [-c] [-
 ...
 ```
 
-## output
+## Output
 
 `toproxypdf -o FILENAME` or `--output FILENAME` sets the output of this program to FILENAME  
 The default output file is called `output.pdf`  
@@ -75,7 +75,7 @@ If designated output file ends with extension ".pdf": designated output filename
 If designated output file does not have extension ".pdf", it will be manually added  
 `toproxypdf -o "tasigur control"` -> "tasigur control.pdf"
 
-## exclude
+## Exclude
 
 Unwanted files can be excluded from the output file with the -e or --exclude flag following the beginning of file name  
 For example:  
@@ -132,7 +132,7 @@ Tainted Pact (b).jpg|is in excluded list
 
 ![output file excluding both tainted pact and pact of negation](./.images/3.jpg)
 
-## dpi
+## DPI
 
 DPI, or dots per pixel, is directly correlated with the file size and how detailed the images originally is, it is defaulted to 1000 and can be changed through the -d or --dpi flag.  
 Note that the final output file size and processing time of the images are both directly correlated with the dpi.  
@@ -144,7 +144,7 @@ Output DPI:             300
 ...
 ```
 
-## corner  
+## Corner  
 
 MTG cards aren't exactly rectangular `-c` or `--corner` flag allows you to add the round corners to each card.  
 The output looks like this:  
