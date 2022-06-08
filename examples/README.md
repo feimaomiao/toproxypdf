@@ -43,7 +43,7 @@ Verbosity:              1
 ....
   ```  
 
-  ![A normal output file](.images/0.png)  
+  ![A normal output file](.images/0.jpg)  
 
 ## help
 
@@ -90,7 +90,7 @@ Force of Will (2XM Showcase).png|is in excluded list
 ...
 ```  
 
-![Output file excluding force of will and force of negation](./.images/1.png)  
+![Output file excluding force of will and force of negation](./.images/1.jpg)  
 If you want to exclude files more specifically, you can use quotation marks.  
 For example, if we only want to exclude Force of Will:  
 
@@ -105,7 +105,7 @@ Force of Will (2XM Showcase).png|is in excluded list
 ...
 ```
 
-![Output file that only excludes force of will](./.images/2.png)  
+![Output file that only excludes force of will](./.images/2.jpg)  
 
 You can also exclude different files separated by spaces  
 For example, if we want to exclude both Pact of Negation and Tainted Pact:  
@@ -123,7 +123,7 @@ Tainted Pact (b).png|is in excluded list
 ...
 ```
 
-![output file excluding both tainted pact and pact of negation](./.images/8.png)
+![output file excluding both tainted pact and pact of negation](./.images/3.jpg)
 
 ## dpi
 
