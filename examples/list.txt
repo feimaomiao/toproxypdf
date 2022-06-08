@@ -1,7 +1,0 @@
-0: py .\toproxypdf\ .\images\ 
-1: py .\toproxypdf\ .\images\ -e force 
-2: py .\toproxypdf\ .\images\ -e "force of will"
-3: ... tainted pact
-5: py .\toproxypdf\ .\images\ -c
-6: py .\toproxypdf\ .\images\ -r 2
-7: py .\toproxypdf\ .\images\ -r 2 -e force

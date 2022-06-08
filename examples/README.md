@@ -1,7 +1,7 @@
 # Examples
 
 In this file, you will see how different flags will alter the output file and the console output.  
-Because of formatting issues and size concerns, only the first "page" of the output will be displayed.  
+Because of formatting issues and size concerns, only the first "page" of the output will be displayed. Please Note that some of the original images have been compressed for size purposes and none of the images in `images` and `.images` is representative of the images' original size.  
 
 Required Argument:  
 
@@ -13,6 +13,10 @@ Optional Arguments
 - [-o output file selection](#output)
 - [-e exclude filenames](#exclude)
 - [-d dpi](#dpi)
+- [-c corner](#corner)
+- [-r repeat](#repeat)
+- [--overwrite](#overwrite)
+- [-v / -q verbosity](#verbosity)
 
 ## folder
 
@@ -52,7 +56,7 @@ Verbosity:              1
 ```none
 > toproxypdf -h
 
-usage: toproxypdf [-h] [-o OUTPUT] [-e EXCLUDED [EXCLUDED ...]] [-d DPI] [-c--corner] [-r REPEAT] [--overwrite] [-v | -q] folder
+usage: toproxypdf [-h] [-o OUTPUT] [-e EXCLUDED [EXCLUDED ...]] [-d DPI] [-c] [-r REPEAT] [--overwrite] [-v | -q] folder
 
 ...
 ```
@@ -85,13 +89,15 @@ Reading from folder:    images
 Excluded Files:         force
 ...
 Excluded file name              |Reason
-Force of Negation.png           |is in excluded list
-Force of Will (2XM Showcase).png|is in excluded list
+Force of Negation.jpg           |is in excluded list
+Force of Will (2XM Showcase).jpg|is in excluded list
 ...
 ```  
 
 ![Output file excluding force of will and force of negation](./.images/1.jpg)  
-If you want to exclude files more specifically, you can use quotation marks.  
+
+### If you want to exclude files more specifically, you can use quotation marks
+
 For example, if we only want to exclude Force of Will:  
 
 ```None
@@ -101,13 +107,14 @@ For example, if we only want to exclude Force of Will:
 Excluded Files:         force of will
 ...
 Excluded file name              |Reason
-Force of Will (2XM Showcase).png|is in excluded list
+Force of Will (2XM Showcase).jpg|is in excluded list
 ...
 ```
 
 ![Output file that only excludes force of will](./.images/2.jpg)  
 
-You can also exclude different files separated by spaces  
+### You can also exclude different files separated by spaces  
+
 For example, if we want to exclude both Pact of Negation and Tainted Pact:  
 
 ```None
@@ -118,8 +125,8 @@ For example, if we want to exclude both Pact of Negation and Tainted Pact:
 Excluded Files:         tainted /pact
 ...
 Excluded file name  |Reason
-Pact of Negation.png|is in excluded list
-Tainted Pact (b).png|is in excluded list
+Pact of Negation.jpg|is in excluded list
+Tainted Pact (b).jpg|is in excluded list
 ...
 ```
 
@@ -136,3 +143,52 @@ toproxypdf images -d 300
 Output DPI:             300
 ...
 ```
+
+## corner  
+
+MTG cards aren't exactly rectangular `-c` or `--corner` flag allows you to add the round corners to each card.  
+The output looks like this:  
+
+```None
+> toproxypdf images -c 
+...
+Corner:                 True
+...
+```  
+
+![Output file that has rounded corners](.images/4.jpg)
+
+## Repeat
+
+Sometimes you want to proxy one deck or a few cards more than once, the `-r` or `--repeat` flag allows you to do that.  
+The output looks like this
+
+```None
+> toproxypdf images -r 2 -e force 
+(excluding force of will and force of negation to show how the repeating files are chained together)
+...
+Repeats:                1
+...
+```
+
+The output looks like this:  
+![Image that shows images chaining with each other](.images/5.jpg)  
+
+## Overwrite
+
+Overwrites existing file while outputting  
+`--overwrite` overwrites the existing file.
+
+```None
+
+> toproxypdf images --overwrite  
+
+...
+Overwrite existing file:True
+...
+```
+
+## Verbosity
+
+`-v` or `--verbose` gives very detailed output  
+`-q` or `--quiet` gives reduced output
