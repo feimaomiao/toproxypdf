@@ -256,6 +256,8 @@ def mainfunc():
     files_to_load = list_files(arguments)
     # convert files into images
     generated_images = generate_images(files_to_load, arguments)
+    if not generated_images:
+        raise IndexError("No valid image is generated from folder")
     logging.info("Converting into pdf")
     # save generated images
     generated_images[0].save(arguments['output'],
