@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from os import path
+from re import match
 
 from PIL import Image, ImageDraw
 from tqdm import tqdm
@@ -86,9 +87,19 @@ def parse_arguments() -> dict:
             raise ValueError("Repeats must be at least 1")
     except:
         raise
+    # checks whether there are quotation marks around folder path
+    if match(r"[\'\"].*[\'\"]", args.folder):
+        args.folder = args.folder[1:-1]
+    # Checks whether input folder is a valid path
+    if not path.isdir(args.folder):
+        if not path.isdir(args.folder[:-1]):
+            # On the edge windows case where \' is the end of file path
+            raise FileNotFoundError(
+                f"\'{args.folder}\' cannnot be registered as a folder.")
+        args.folder = args.folder[:-1]
     a = {
         # input folder
-        "folder": args.folder,
+        "folder": path.normpath(args.folder),
         # output file
         "output": o,
         # list of excluded file names
@@ -103,9 +114,6 @@ def parse_arguments() -> dict:
         "verb": 0 if args.quiet else 2 if args.verbose else 1
     }
     verbosity = {0: logging.CRITICAL, 1: logging.INFO, 2: logging.DEBUG}
-    # checks whether the input folder is a valid path
-    if not path.isdir(a["folder"]):
-        raise FileNotFoundError(f"\'{a['folder']}\' is not a folder.")
     print(f"""\
 Reading from folder:    {a['folder']}
 Outputting to file:     {a['output']}

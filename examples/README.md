@@ -24,9 +24,18 @@ Folder has to be designated while initiating the program
 Possible program calls:  
 
 - `toproxypdf folder`
-- `toproxypdf folder [arguments]`  
-- `toproxypdf [arguments] folder`
-- `toproxypdf [arguments] folder [arguments]`
+- `toproxypdf folder [arguments]`  *
+- `toproxypdf [arguments] folder` (suggested)
+- `toproxypdf [arguments] folder [arguments]`*
+
+*Please note that in Windows file path is separated by escape character "`\`" which may cause some problems  
+For example:  
+`toproxypdf 'fol der\'` would have folder parsed as `fol der"`, which is manually parsed as of 0.1.5.  
+However, in this case arguments inputted after the folder will be added to the  file path itself  
+For example:  
+`toproxypdf 'fol der\' --overwrite` will have folder parsed as `fol der" --overwrite`, which is not a valid file path.  
+Therefore, it is highly suggested to use the syntax  
+`toproxypdf [arguments] folder`
 
 Folder has to be a valid folder path or `FileNotFoundError` will be raised  
 Folder must contain valid images or `IndexError` will be raised  
